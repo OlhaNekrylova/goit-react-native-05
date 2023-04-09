@@ -10,7 +10,7 @@ const NestedScreen = createStackNavigator();
 const PostsScreen = () => {
   return (
     <NestedScreen.Navigator 
-      initialRouteName="CreatePosts" 
+      initialRouteName="DefaultScreen" 
       screenOptions={{headerShown: false}}     
     >
         <NestedScreen.Screen
