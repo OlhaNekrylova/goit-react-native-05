@@ -6,7 +6,6 @@ import CreatePostsScreen from "./CreatePostsScreen";
 import PostsScreen from "./PostsScreen";
 import ProfileScreen from "./ProfileScreen";
 
-
 const BottomTabs = createBottomTabNavigator(); 
 
 const HomeScreen = ({ navigation }) => {

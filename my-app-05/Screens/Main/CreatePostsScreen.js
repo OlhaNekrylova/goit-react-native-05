@@ -1,271 +1,241 @@
 import React, { useState, useEffect } from "react";
-import { View, Image, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import { Camera } from "expo-camera";
-// import { TouchableOpacity } from "react-native-gesture-handler";
+import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import {
+  Text, View, Alert, Image, TextInput, Platform, TouchableOpacity,
+  KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, StyleSheet
+} from "react-native";
 
-// const initialState = {
-//   title: "",
-//   place: "",
-// };
+const initialState = {
+  id: "",
+  name: "",
+  address: "",
+  coordinate: {},
+  uri: "",
+};
 
-const CreatePostsScreen = ({ route, navigation }) => {
-  // const [state, setState] = useState(initialState);
+const CreatePostsScreen = ({ navigation, route }) => {
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
-  const [camera, setCamera] = useState(null);
-  const [photo, setPhoto] = useState(null);
-  const [location, setLocation] = useState(null);
-  const [region, setRegion] = useState(null);
-  const [inputRegion, setInputRegion] = useState('')
-  const [title, setTitle] = useState('');
-
-  const active = title && region;
-
+  const [state, setState] = useState(initialState);
+  const imageHandler = () => navigation.navigate("CreatePhoto");
+  const nameHandler = (value) =>
+    setState((prevState) => ({ ...prevState, name: value }));
+  const addressHandler = (value) =>
+    setState((prevState) => ({ ...prevState, address: value }));
+  const handleSubmit = () => {
+    Keyboard.dismiss();
+    navigation.navigate("PostsScreen", { ...state });
+    setState(initialState);
+  };
   useEffect(() => {
-    (async () => {
+    if (route.params) {
+      setState((prevState) => ({ ...prevState, ...route.params }));
+      GetCurrentLocation();
+    }
+  }, [route.params]);
 
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.log("Permission to access location was denied");
-      }   
+  const GetCurrentLocation = async () => {
+    let permission = await Location.requestForegroundPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission not granted",
+        "Allow the app to use location service.",
+        [{ text: "OK" }],
+        { cancelable: false }
+      );
+    }
+    const { coords } = await Location.getCurrentPositionAsync();
 
-      Location.getCurrentPositionAsync({}).then((locationPos) =>{
-        const coords = {
-          latitude: locationPos.coords.latitude,
-          longitude: locationPos.coords.longitude,
-        };
-        setLocation(coords);
-        return coords;
-      }).then((coords)=>{
-        return Location.reverseGeocodeAsync(coords)
-      }).then((regionName)=> setRegion(regionName)).catch();
-
-    })();
-  }, []);
-
-  const takePhoto = async () => {
-    const photo = await camera.takePictureAsync();
-    // const location = await Location.getCurrentPositionAsync();
-    // console.log("latitude", location.coords.latitude);
-    // console.log("longitude", location.coords.longitude);
-    setPhoto(photo.uri);
-    console.log("photo", photo);
-    setInputRegion(region[0]['country'] + ", " + region[0]['city']); 
+    if (coords) {
+      const { latitude, longitude } = coords;
+      setState((prevState) => ({
+        ...prevState,
+        coordinate: { latitude, longitude },
+      }));
+      const response = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+      const { country, city, subregion } = response[0];
+      setState((prevState) => ({
+        ...prevState,
+        address: `${country}, ${city ? city : subregion}`,
+      }));
+    }
+  };
+  const chengIsShowKeyboard = () => setIsShowKeyboard(true);
+  const keyboardHide = () => {
+    setIsShowKeyboard(false);
+    Keyboard.dismiss();
   };
 
-  const publishPhoto = () => {
-    if (!title || !location || !photo) { alert("Enter all data, please!"); return }
-    console.log("navigation", navigation);
-    navigation.navigate("DefaultScreen", { photo, location, title, inputRegion });
-  };
+  const handleDel = () => setState(initialState);
+  const { name, address,
+    uri
+    } = state;
 
   return (
-    <View style={styles.container}>
-      <Camera style={styles.camera} ref={setCamera}>
-        
-          <View style={styles.takePhotoContainer}>
-            <Image
-              source={{ uri: photo }}
-              style={{ height: 220, width: 220, marginTop: -80 }}
-            />
+    <TouchableWithoutFeedback onPress={keyboardHide}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS == "ios" ? "padding" : "height"}
+      >
+        {uri ? (
+          <Image source={{ uri }} style={styles.imageBox} />
+        ) : (
+          <View
+            style={{ ...styles.imageBox, marginTop: isShowKeyboard ? -32 : 32 }}
+          >
+            <TouchableOpacity
+              style={styles.cameraButton}
+              activeOpacity={0.8}
+              onPress={imageHandler}
+            >
+              <Feather name="camera" size={24} color="#BDBDBD" />
+            </TouchableOpacity>
           </View>
-        </Camera>
-        <TouchableOpacity 
-          style={styles.snapContainer}
-          onPress={takePhoto} 
-          activeOpacity={0.1}
-        >
-          <FontAwesome name="camera" size={24} color="white" />
-        </TouchableOpacity>
-      
-      <Text style={ styles.postImgText }>Upload a photo</Text>
-    <View style={ styles.postForm }>
-    <TextInput 
-        style={ styles.input } 
-        placeholder="Title"
-        inputMode="text"
-        onFocus={() => setIsShowKeyboard(true)}
-        value={ title }
-        onChangeText={(value) =>
-        setTitle((prevTitle) => ({ ...prevTitle, title: value }))}
-    />
-    <View style={styles.placeField}>
-      <Feather
+        )}
+        <Text style={styles.text}>Upload a photo</Text>
+        <View style={styles.inputBlock}>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={nameHandler}
+            onFocus={chengIsShowKeyboard}
+            placeholder="Name..."
+            autoCapitalize="none"
+          />
+          <View style={styles.locationField}>
+            <Feather
               name="map-pin"
               size={24}
               color="#BDBDBD"
-              style={styles.placeIcon}
+              style={styles.locationIcon}
             />
-      <TextInput 
-        style={ styles.placeInput } 
-        placeholder="Location"
-        inputMode="text"
-        onFocus={() => setIsShowKeyboard(true)}
-        value={ inputRegion }
-        onChangeText={(value) =>
-        setInputRegion((prevInputRegion) => ({ ...prevInputRegion, inputRegion: value }))}
-      />
-    </View>
-        <TouchableOpacity 
-          onPress={publishPhoto}
-          style={active?styles.publishBtnActive:styles.publishBtn} 
-          activeOpacity={0.5}>
-          <Text style={active?styles.publishLabelActive:styles.publishLabel}>Publish</Text>
-        </TouchableOpacity>
+            <TextInput
+              style={{ ...styles.input, ...styles.locationInput }}
+              onChangeText={addressHandler}
+              onFocus={chengIsShowKeyboard}
+              placeholder="Location..."
+              autoCapitalize="none"
+              value={address}
+            />
+          </View>
         </View>
-        <View style={ styles.deletePost }>
         <TouchableOpacity
-              style={ styles.deleteButton } 
-              activeOpacity={0.5} 
+          activeOpacity={0.8}
+          style={styles.btn}
+          onPress={handleSubmit}
         >
-          <Feather name="trash-2" size={24} color="#BDBDBD" />
+          <Text style={styles.btnTitle}>Publish</Text>
         </TouchableOpacity>
+        <View style={styles.btnTrashBox}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.btnTrash}
+            onPress={handleDel}
+          >
+            <Feather name="trash-2" size={24} color="#BDBDBD" />
+          </TouchableOpacity>
         </View>
-        
-        {/* </View> */}
-    </View>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    // position: "relative",
+    position: "relative",
     flex: 1,
+    paddingHorizontal: 16,
+    backgroundColor: "#FFFFFF",
+  },
+  imageBox: {
+    width: "100%",
+    height: 240,
+    marginTop: 32,
     justifyContent: "center",
-      alignItems: "center", 
-      backgroundColor: "#fff",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    borderRadius: 8,
+    backgroundColor: "#F6F6F6",
   },
-  camera: {
-      // flex: 3,
-      width: '100%',
-      height: 240,
-      marginTop: 32,
-      color: '#F6F6F6',
-      backgroundColor: "#F6F6F6",
-      // justifyContent: "center",
-      // alignItems: "center",
-      
-    //   width: "100%",
-    // height: 240,
-    // marginTop: 32,
-    // justifyContent: "center",
-    // alignItems: "center",
-    // borderWidth: 1,
-    // borderColor: "#E8E8E8",
-    // borderRadius: 8,
-    // backgroundColor: "#F6F6F6",
-  },
-  snapContainer: {
-    // position: "absolute",
-    // top: 150,
-  //   left: 10,
-    display: 'flex',
-      marginTop: -80,
-      width: 60,
+  cameraButton: {
+    width: 60,
     height: 60,
-      borderRadius: 50,
-      // padding: 3,
-      backgroundColor: '#E8E8E8',
-      borderColor: '#ffffff',
-      // borderWidth: 2,
-      alignItems: 'center',
-      justifyContent: "center"
-  },
-  postImgText: {
+    borderColor: "#FFFFFF",
+    borderRadius: 50,
     justifyContent: "center",
-    alignItems: "flex-start",
-    marginTop: 20,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+
+  text: {
+    color: "#BDBDBD",
+    textAlign: "left",
+    marginTop: 8,
     fontSize: 16,
-    color: "#BDBDBD"
-},
-  postForm:{
+    // fontFamily: "Roboto-Regular",
+  },
+  inputBlock: {
     marginVertical: 32,
     gap: 16,
-},
-  input: {
-    width: 343,
-    height: 50,
-    marginTop: 32,
-    // paddingVertical: 16,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 19,
-    borderBottomColor: '#E8E8E8',
-    borderBottomWidth: 2,
-  },
-  placeInput: {
-    width: 343,
-    height: 50,
-    marginTop: 32,
-    // paddingVertical: 16,
-    fontStyle: 'normal',
-    fontWeight: '400',
-    fontSize: 16,
-    lineHeight: 19,
-    borderBottomColor: '#E8E8E8',
-    borderBottomWidth: 2,
-    paddingLeft: 30,
   },
 
-  placeField: {
+  input: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8E8E8",
+    paddingVertical: 16,
+    color: "#212121",
+    fontSize: 16,
+    // fontFamily: "Roboto-Regular",
+  },
+  locationInput: {
+    paddingLeft: 28,
+  },
+
+  locationField: {
     justifyContent: "center",
     alignItems: "flex-start",
   },
 
-  placeIcon: {
+  locationIcon: {
     position: "absolute",
     left: 0,
-    top: 45,
     marginRight: 4,
   },
-  publishBtn:{
-    backgroundColor: '#E8E8E8',
-    width: 343,
-    height: 51,
+
+  btn: {
+    backgroundColor: "#FF6C00",
+    borderRadius: 100,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 100,
-    marginTop: 32,
   },
-  publishBtnActive: {
-    backgroundColor: '#FF6C00',
-    width: 343,
-    height: 51, 
-    justifyContent: "center",
+  btnTitle: {
+    color: "#FFFFFF",
+    paddingVertical: 16,
+    textAlign: "center",
+    fontSize: 16,
+    lineHeight: 19,
+  },
+
+  btnTrashBox: {
+    position: "absolute",
+    width: "100%",
+    bottom: 34,
+    left: 15,
     alignItems: "center",
-    borderRadius: 100,
-    marginTop: 32,
   },
-  publishLabel: {
-    color: "#BDBDBD",
-    fontSize: 16,
-    lineHeight: 19,
-    fontWeight: '400',
-  },
-  publishLabelActive: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    lineHeight: 19,
-    fontWeight: '400',
-  },
-  // deletePost: {
-  //   position: "absolute",
-  //   width: "100%",
-  //   bottom: 34,
-  //   left: 15,
-  //   alignItems: "center",
-  // },
-  deleteButton: {
-    backgroundColor: '#F6F6F6',
+
+  btnTrash: {
+    width: 70,
     height: 40,
-    width: 70, 
-    // marginTop: 120,
+    backgroundColor: "#F6F6F6",
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 20,
-    // marginBottom: 20,
   },
 });
 

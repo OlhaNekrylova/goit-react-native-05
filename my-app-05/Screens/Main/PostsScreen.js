@@ -1,26 +1,66 @@
-import React from "react";
-import { moduleName } from "react-native";
-import { createStackNavigator } from "@react-navigation/stack";
-import DefaultScreenPosts from "../NestedScreens/DefaultScreenPosts";
-import CommentsScreen from "../NestedScreens/CommentsScreen";
-import MapScreen from "../NestedScreens/MapScreen";
+import React, { useState, useEffect } from "react";
+import { View, ScrollView, SafeAreaView, StyleSheet } from "react-native";
+import data from "../../assets/data";
+import PostsCard from "../../components/PostsCards";
+import UserCard from "../../components/UserCard";
 
-const NestedScreen = createStackNavigator();
+const PostsScreen = ({ navigation, route }) => {
+  const [posts, setPosts] = useState(data);
 
-const PostsScreen = () => {
+  useEffect(() => {
+    route.params && setPosts((prevState) => [...prevState, route.params]);
+  }, [route.params]);
+
+  const mapView = () => {
+    navigation.navigate("Map", 
+    coordinate
+    );
+  };
+  const commentView = () => {
+    navigation.navigate("Comments",
+    { id, uri }
+  );
+  };
+  
   return (
-    <NestedScreen.Navigator 
-      initialRouteName="DefaultScreen" 
-      screenOptions={{headerShown: false}}     
-    >
-        <NestedScreen.Screen
-        name="DefaultScreen"
-        component={DefaultScreenPosts}
-      />
-      <NestedScreen.Screen name="Comments" component={CommentsScreen} />
-      <NestedScreen.Screen name="Map" component={MapScreen} />
-    </NestedScreen.Navigator>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.list}>
+          <UserCard />
+          {posts.map(({ id, name, address, 
+          coordinate, uri 
+        }) => (
+            <PostsCard
+              key={id}
+              id={id}
+              name={name}
+              address={address}
+              coordinate={coordinate}
+              uri={uri}
+              mapClick={mapView}
+              commentClick={commentView}
+            />
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+  },
+  list: {
+    flex: 1,
+    display: "flex",
+    marginVertical: 32,
+    flexDirection: "column",
+    gap: 32,
+  },
+});
 
 export default PostsScreen;
