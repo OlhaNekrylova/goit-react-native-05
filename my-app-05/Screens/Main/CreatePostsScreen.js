@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Feather } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import {
-  Text, View, Alert, Image, TextInput, Platform, TouchableOpacity,
-  KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, StyleSheet
-} from "react-native";
+import { Text, View, Alert, Image, TextInput, Platform, TouchableOpacity,
+  KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, StyleSheet } from "react-native";
 
 const initialState = {
   id: "",

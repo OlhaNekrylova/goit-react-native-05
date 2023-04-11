@@ -11,12 +11,12 @@ const PostsScreen = ({ navigation, route }) => {
     route.params && setPosts((prevState) => [...prevState, route.params]);
   }, [route.params]);
 
-  const mapView = () => {
+  const mapView = (coordinate) => {
     navigation.navigate("Map", 
     coordinate
     );
   };
-  const commentView = () => {
+  const commentView = (id, uri) => {
     navigation.navigate("Comments",
     { id, uri }
   );

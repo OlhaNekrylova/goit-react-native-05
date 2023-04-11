@@ -15,15 +15,17 @@ import CreatePhoto from "./components/CreatePhoto";
 
 const Navigation = () =>{
   return (
-  <MainStack.Navigator initialRouteName='Login' screenOptions={{headerShown: false}}>
-    <MainStack.Screen name='Login' component={LoginScreen}/>
-    <MainStack.Screen name='Registration' component={RegistrationScreen}/>
-    <MainStack.Screen name='Home' component={HomeScreen}/> 
-    <MainStack.Screen name='CreatePostsScreen' component={CreatePostsScreen}/> 
-    <MainStack.Screen name='ProfileScreen' component={ProfileScreen}/> 
-    <MainStack.Screen name='Map' component={MapScreen}/> 
-    <MainStack.Screen name='Comments' component={CommentsScreen}/> 
-    <MainStack.Screen name='CreatePhoto' component={CreatePhoto}/> 
+  <MainStack.Navigator initialRouteName='Login' 
+  // screenOptions={{headerShown: false}}
+  >
+    <MainStack.Screen name='Login' component={LoginScreen} options={{ headerShown: false }}/>
+    <MainStack.Screen name='Registration' component={RegistrationScreen} options={{ headerShown: false }}/>
+    <MainStack.Screen name='Home' component={HomeScreen} options={{ headerShown: false }}/> 
+    <MainStack.Screen name='CreatePostsScreen' component={CreatePostsScreen} options={{ headerShown: false }}/> 
+    <MainStack.Screen name='ProfileScreen' component={ProfileScreen} options={{ headerShown: false }}/> 
+    <MainStack.Screen name='Map' component={MapScreen} options={{ headerShown: true }}/> 
+    <MainStack.Screen name='Comments' component={CommentsScreen} options={{ headerShown: true }}/> 
+    <MainStack.Screen name='CreatePhoto' component={CreatePhoto} options={{ headerShown: true }}/> 
   </MainStack.Navigator>
 );
 };
